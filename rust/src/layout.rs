@@ -37,10 +37,15 @@ pub struct LayoutResult {
 // ── Font context setup ──────────────────────────────────────────────────────
 
 /// Read the font family name from OpenType/TrueType font data.
+///
+/// Fontique files a font under its typographic family (name ID 16) when the font has one, so the
+/// lookup prefers it over the legacy family (name ID 1), which variable fonts often set to one
+/// instance such as "Outfit Thin".
 fn read_family_name(data: &[u8]) -> Option<String> {
     let font = skrifa::FontRef::from_index(data, 0).ok()?;
-    font.localized_strings(NameId::FAMILY_NAME)
-        .english_or_first()
+    [NameId::TYPOGRAPHIC_FAMILY_NAME, NameId::FAMILY_NAME]
+        .into_iter()
+        .find_map(|id| font.localized_strings(id).english_or_first())
         .map(|s| s.chars().collect())
 }
 
