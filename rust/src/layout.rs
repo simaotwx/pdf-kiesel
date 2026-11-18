@@ -6,9 +6,7 @@ use base64::Engine;
 use parley::fontique::Blob;
 use parley::style::{FontFamily, FontStack, FontWeight, FontStyle, StyleProperty};
 use parley::{FontContext, Layout, LayoutContext, LineHeight, Alignment, AlignmentOptions};
-use skrifa::MetadataProvider;
-use skrifa::raw::types::NameId;
-
+use crate::font_family::read_family_name;
 use crate::model::{PdfColor, PdfElement};
 use crate::tree::*;
 
@@ -35,19 +33,6 @@ pub struct LayoutResult {
 }
 
 // ── Font context setup ──────────────────────────────────────────────────────
-
-/// Read the font family name from OpenType/TrueType font data.
-///
-/// Fontique files a font under its typographic family (name ID 16) when the font has one, so the
-/// lookup prefers it over the legacy family (name ID 1), which variable fonts often set to one
-/// instance such as "Outfit Thin".
-fn read_family_name(data: &[u8]) -> Option<String> {
-    let font = skrifa::FontRef::from_index(data, 0).ok()?;
-    [NameId::TYPOGRAPHIC_FAMILY_NAME, NameId::FAMILY_NAME]
-        .into_iter()
-        .find_map(|id| font.localized_strings(id).english_or_first())
-        .map(|s| s.chars().collect())
-}
 
 /// Register all document fonts with parley's fontique collection.
 /// Returns (blob map, name map) where name map translates user-provided names
