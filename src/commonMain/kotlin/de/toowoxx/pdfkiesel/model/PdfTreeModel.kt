@@ -276,6 +276,8 @@ data class TreePage(
 data class TreeDocument(
     val fonts: Map<String, PdfFontDef> = emptyMap(),
     val pages: List<TreePage> = emptyList(),
+    /** Key in [fonts] of the font used by text without a font. Empty when the document sets none. */
+    val defaultFont: String = "",
 ) {
     fun toJson(): String = TREE_JSON.encodeToString(this)
 

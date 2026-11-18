@@ -649,7 +649,7 @@ pub fn render_tree(doc: &TreeDocument) -> Vec<u8> {
             }
         }
     }
-    let fallback_font = krilla_fonts.values().next().cloned();
+    let fallback_font = krilla_fonts.get(&doc.default_font).cloned();
 
     for tree_page in &doc.pages {
         let margin = &tree_page.margin;
@@ -658,12 +658,7 @@ pub fn render_tree(doc: &TreeDocument) -> Vec<u8> {
         let content_width = (tree_page.width - margin.left - margin.right).max(0.0);
         let content_height = (tree_page.height - margin.top - margin.bottom).max(0.0);
 
-        // Determine the default font name (first registered font)
-        let default_font = doc.fonts.keys().next()
-            .cloned()
-            .unwrap_or_default();
-
-        let mut engine = LayoutEngine::new(&mut font_cx, &mut layout_cx, default_font, font_name_map.clone());
+        let mut engine = LayoutEngine::new(&mut font_cx, &mut layout_cx, doc.default_font.clone(), font_name_map.clone());
 
         // Layout + paginate
         let output_pages = paginate(

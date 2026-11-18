@@ -192,6 +192,9 @@ pdfDocument {
 }
 ```
 
+Text without a font uses the default font: the font set with `defaultFont("MyFont")`, otherwise
+the font registered first.
+
 ### Page Configuration
 
 ```kotlin

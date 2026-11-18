@@ -24,10 +24,14 @@ inline fun pdfDocument(block: DocumentBuilder.() -> Unit): TreeDocument {
 class DocumentBuilder {
     @PublishedApi internal val pages = mutableListOf<TreePage>()
     private val fonts = mutableMapOf<String, PdfFontDef>()
-    @PublishedApi internal var defaultFont: String = ""
+    private var chosenDefaultFont = ""
+
+    /** The font set with `defaultFont(name)`, otherwise the font registered first. */
+    @PublishedApi internal val defaultFont: String
+        get() = chosenDefaultFont.ifEmpty { fonts.keys.firstOrNull().orEmpty() }
 
     fun defaultFont(name: String) {
-        defaultFont = name
+        chosenDefaultFont = name
     }
 
     @OptIn(ExperimentalEncodingApi::class)
@@ -81,7 +85,7 @@ class DocumentBuilder {
     }
 
     @PublishedApi
-    internal fun build(): TreeDocument = TreeDocument(fonts.toMap(), pages.toList())
+    internal fun build(): TreeDocument = TreeDocument(fonts.toMap(), pages.toList(), defaultFont)
 }
 
 data class Margin(
