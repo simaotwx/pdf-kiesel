@@ -195,7 +195,8 @@ pdfDocument {
 ```
 
 Text without a font uses the default font: the font set with `defaultFont("MyFont")`, otherwise
-the font registered first.
+the font registered first. A default font that is not registered fails when the document is built,
+and so does a document that registers fonts without a default font.
 
 ### Page Configuration
 

@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use base64::engine::general_purpose::STANDARD as BASE64;
-use base64::Engine;
 use parley::fontique::Blob;
 use parley::style::{FontFamily, FontStack, FontStyle, StyleProperty};
 use parley::{FontContext, Layout, LayoutContext, LineHeight, Alignment, AlignmentOptions};
@@ -35,27 +33,22 @@ pub struct LayoutResult {
 // ── Font context setup ──────────────────────────────────────────────────────
 
 /// Register all document fonts with parley's fontique collection.
-/// Returns (blob map, name map) where name map translates user-provided names
-/// to actual font family names discovered from the font binary.
+/// Returns the name map, which translates user-provided names to actual font
+/// family names discovered from the font binary.
 pub fn register_fonts(
     font_cx: &mut FontContext,
-    fonts: &HashMap<String, crate::model::PdfFontDef>,
-) -> (HashMap<String, (Blob<u8>, u32)>, HashMap<String, String>) {
-    let mut blobs = HashMap::new();
+    files: &HashMap<String, Blob<u8>>,
+) -> HashMap<String, String> {
     let mut name_map = HashMap::new();
-    for (name, def) in fonts {
-        if let Ok(bytes) = BASE64.decode(&def.data) {
-            if let Some(actual_name) = read_family_name(&bytes) {
-                if &actual_name != name {
-                    name_map.insert(name.clone(), actual_name);
-                }
+    for (name, file) in files {
+        if let Some(actual_name) = read_family_name(file.data()) {
+            if &actual_name != name {
+                name_map.insert(name.clone(), actual_name);
             }
-            let blob: Blob<u8> = Vec::into(bytes);
-            font_cx.collection.register_fonts(blob.clone(), None);
-            blobs.insert(name.clone(), (blob, 0u32));
         }
+        let _families_are_looked_up_by_name = font_cx.collection.register_fonts(file.clone(), None);
     }
-    (blobs, name_map)
+    name_map
 }
 
 // ── Layout engine ───────────────────────────────────────────────────────────
@@ -63,7 +56,7 @@ pub fn register_fonts(
 pub struct LayoutEngine<'a> {
     font_cx: &'a mut FontContext,
     layout_cx: &'a mut LayoutContext<PdfColor>,
-    default_font: String,
+    default_font: Option<String>,
     font_name_map: HashMap<String, String>,
 }
 
@@ -71,7 +64,7 @@ impl<'a> LayoutEngine<'a> {
     pub fn new(
         font_cx: &'a mut FontContext,
         layout_cx: &'a mut LayoutContext<PdfColor>,
-        default_font: String,
+        default_font: Option<String>,
         font_name_map: HashMap<String, String>,
     ) -> Self {
         Self { font_cx, layout_cx, default_font, font_name_map }
@@ -80,7 +73,10 @@ impl<'a> LayoutEngine<'a> {
     /// Resolve a user-provided font name to the actual font family name
     /// that parley/fontique discovered from the font binary.
     fn resolve_font<'b>(&'b self, font: &'b str) -> &'b str {
-        let name = if font.is_empty() { &self.default_font } else { font };
+        let name = match &self.default_font {
+            Some(default_font) if font.is_empty() => default_font,
+            _ => font,
+        };
         self.font_name_map.get(name).map(|s| s.as_str()).unwrap_or(name)
     }
 

@@ -453,9 +453,9 @@ pub struct TreeDocument {
     pub fonts: HashMap<String, PdfFontDef>,
     #[serde(default)]
     pub pages: Vec<TreePage>,
-    /// Key in `fonts` of the font used by text without a font. Empty when the document sets none.
-    #[serde(default = "default_font")]
-    pub default_font: String,
+    /// Key in `fonts` of the font used by text without a font. Absent when the document has no fonts.
+    #[serde(default)]
+    pub default_font: Option<String>,
 }
 
 #[cfg(test)]
@@ -468,7 +468,7 @@ mod tests {
         let doc: TreeDocument =
             serde_json::from_str(r#"{"fonts":{},"pages":[],"defaultFont":"Inter"}"#).expect("the document is valid");
 
-        assert_eq!(doc.default_font, "Inter");
+        assert_eq!(doc.default_font.as_deref(), Some("Inter"));
     }
 
     fn weight_of(json: &str) -> Result<FontWeight, serde_json::Error> {

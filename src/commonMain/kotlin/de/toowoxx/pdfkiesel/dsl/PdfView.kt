@@ -91,10 +91,9 @@ internal data class RectNode(
 internal class TableNode(
     private val buildBlock: TableBuilder.() -> Unit,
     private val availableWidth: Float,
-    private val defaultFont: String = "",
 ) : PdfView {
     override fun toNode(): DocumentNode {
-        val builder = TableBuilder(availableWidth, defaultFont)
+        val builder = TableBuilder(availableWidth)
         builder.buildBlock()
         return builder.buildNode()
     }
@@ -272,10 +271,9 @@ internal class CanvasNode(
     private val canvasHeight: Float,
     private val block: CanvasScope.() -> Unit,
     private val availableWidth: Float,
-    private val defaultFont: String = "",
 ) : PdfView {
     override fun toNode(): DocumentNode {
-        val scope = CanvasScope(0f, 0f, availableWidth, canvasHeight, yDown = true, defaultFont = defaultFont)
+        val scope = CanvasScope(0f, 0f, availableWidth, canvasHeight, yDown = true)
         scope.block()
         return DocumentNode.Canvas(height = canvasHeight, elements = scope.elements)
     }
