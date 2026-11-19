@@ -15,7 +15,7 @@ use krilla_svg::{SvgSettings, SurfaceExt};
 use parley::{FontContext, LayoutContext};
 
 use crate::layout::{LayoutEngine, PositionedItem, register_fonts};
-use crate::model::{PdfColor, PdfElement};
+use crate::model::{FontWeight, PdfColor, PdfElement};
 use crate::paginate::paginate;
 use crate::tree::TreeDocument;
 
@@ -640,16 +640,11 @@ pub fn render_tree(doc: &TreeDocument) -> Vec<u8> {
     let mut layout_cx: LayoutContext<PdfColor> = LayoutContext::new();
     let (_font_blobs, font_name_map) = register_fonts(&mut font_cx, &doc.fonts);
 
-    // Also create krilla fonts for non-text element rendering (existing draw_text path)
-    let mut krilla_fonts: HashMap<String, Font> = HashMap::new();
-    for (name, def) in &doc.fonts {
-        if let Ok(bytes) = BASE64.decode(&def.data) {
-            if let Some(font) = Font::new(Arc::new(bytes).into(), 0) {
-                krilla_fonts.insert(name.clone(), font);
-            }
-        }
-    }
-    let fallback_font = krilla_fonts.get(&doc.default_font).cloned();
+    // Font files for canvas text, which krilla draws without parley (draw_text path)
+    let font_files: HashMap<String, krilla::Data> = doc.fonts.iter()
+        .filter_map(|(name, def)| Some((name.clone(), Arc::new(BASE64.decode(&def.data).ok()?).into())))
+        .collect();
+    let fallback_font_file = font_files.get(&doc.default_font);
 
     for tree_page in &doc.pages {
         let margin = &tree_page.margin;
@@ -707,8 +702,8 @@ pub fn render_tree(doc: &TreeDocument) -> Vec<u8> {
                         render_element_ydown(
                             &mut surface,
                             element,
-                            &krilla_fonts,
-                            fallback_font.as_ref(),
+                            &font_files,
+                            fallback_font_file,
                         );
                     }
                 }
@@ -852,17 +847,23 @@ fn render_parley_layout(
     }
 }
 
+/// The font in `file` set to `weight` on its weight axis. A font without that axis draws its single weight.
+fn font_at_weight(file: &krilla::Data, weight: FontWeight) -> Option<Font> {
+    Font::new_variable(file.clone(), 0, &[(Tag::new(b"wght"), weight.value())])
+}
+
 /// Render a single PdfElement whose coordinates are already in y-down (krilla-native) space.
 /// Used by the tree rendering path where the layout engine produces y-down coords directly.
 fn render_element_ydown(
     surface: &mut krilla::surface::Surface,
     element: &PdfElement,
-    fonts: &HashMap<String, Font>,
-    fallback: Option<&Font>,
+    font_files: &HashMap<String, krilla::Data>,
+    fallback_font_file: Option<&krilla::Data>,
 ) {
     match element {
-        PdfElement::Text { content, x, y, font_size, font, color } => {
-            let resolved = fonts.get(font).or(fallback).cloned();
+        PdfElement::Text { content, x, y, font_size, font, color, weight } => {
+            let resolved = font_files.get(font).or(fallback_font_file)
+                .and_then(|file| font_at_weight(file, *weight));
             if let Some(f) = resolved {
                 surface.set_fill(Some(fill_from(color)));
                 surface.set_stroke(None);

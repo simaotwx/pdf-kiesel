@@ -1,6 +1,7 @@
 package de.toowoxx.pdfkiesel.dsl
 
 import de.toowoxx.pdfkiesel.model.DocumentNode
+import de.toowoxx.pdfkiesel.model.FontWeight
 import de.toowoxx.pdfkiesel.model.PdfColor
 
 @PdfDslMarker
@@ -54,7 +55,7 @@ internal constructor(
                             color = cell.color,
                             align = cell.align,
                             lineSpacing = cell.lineSpacing ?: 1.3f,
-                            bold = cell.bold,
+                            weight = cell.weight,
                             markdown = markdown,
                         )
                         GridCellDef(columnSpan = cell.columnSpan, children = listOf(child))
@@ -85,7 +86,7 @@ class TableRowBuilder internal constructor(private val defaultFont: String = "")
                 font = style.font,
                 color = style.color,
                 align = style.align,
-                bold = style.bold,
+                weight = style.weight,
                 lineSpacing = style.lineSpacing,
             )
         )
@@ -103,8 +104,16 @@ class CellStyle {
     var font: String = ""
     var color: PdfColor = PdfColor.BLACK
     var align: TextAlign = TextAlign.LEFT
-    var bold: Boolean = false
+    var weight: FontWeight = FontWeight.Normal
     var lineSpacing: Float? = null
+
+    /** Bold text is text at [FontWeight.Bold]. Turning bold off goes back to [FontWeight.Normal]. */
+    @Deprecated("Set the weight", ReplaceWith("weight = FontWeight.Bold", "de.toowoxx.pdfkiesel.model.FontWeight"))
+    var bold: Boolean
+        get() = weight == FontWeight.Bold
+        set(value) {
+            weight = FontWeight.of(bold = value)
+        }
 }
 
 internal sealed interface TableCell {
@@ -117,7 +126,7 @@ internal data class TextTableCell(
     val font: String,
     val color: PdfColor,
     val align: TextAlign,
-    val bold: Boolean = false,
+    val weight: FontWeight = FontWeight.Normal,
     val lineSpacing: Float? = null,
     override val columnSpan: Int = 1,
 ) : TableCell

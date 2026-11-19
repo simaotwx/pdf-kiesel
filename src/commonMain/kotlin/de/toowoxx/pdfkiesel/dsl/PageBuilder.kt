@@ -20,12 +20,12 @@ internal constructor(
 
     fun text(content: String, block: TextStyle.() -> Unit = {}) {
         val s = TextStyle().apply(block)
-        children.add(TextNode(content, s.fontSize, s.font, s.color, s.align, s.lineSpacing, s.bold, s.italic))
+        children.add(TextNode(content, s.fontSize, s.font, s.color, s.align, s.lineSpacing, s.weight, s.italic))
     }
 
     fun paragraph(content: String, block: TextStyle.() -> Unit = {}) {
         val s = TextStyle().apply(block)
-        children.add(ParagraphNode(content, s.fontSize, s.font, s.color, s.align, s.lineSpacing, s.bold))
+        children.add(ParagraphNode(content, s.fontSize, s.font, s.color, s.align, s.lineSpacing, s.weight))
     }
 
     fun spacer(height: Float) {

@@ -97,7 +97,7 @@ sealed interface DocumentNode {
         val font: String = "",
         val color: PdfColor = PdfColor.BLACK,
         val align: TreeTextAlign = TreeTextAlign.LEFT,
-        val bold: Boolean = false,
+        val weight: FontWeight = FontWeight.Normal,
         val italic: Boolean = false,
         val lineSpacing: Float = 1.4f,
     ) : DocumentNode
@@ -111,7 +111,7 @@ sealed interface DocumentNode {
         val color: PdfColor = PdfColor.BLACK,
         val align: TreeTextAlign = TreeTextAlign.LEFT,
         val lineSpacing: Float = 1.4f,
-        val bold: Boolean = false,
+        val weight: FontWeight = FontWeight.Normal,
         val markdown: Boolean = false,
     ) : DocumentNode
 

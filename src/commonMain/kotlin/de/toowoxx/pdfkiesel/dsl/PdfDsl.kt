@@ -1,5 +1,6 @@
 package de.toowoxx.pdfkiesel.dsl
 
+import de.toowoxx.pdfkiesel.model.FontWeight
 import de.toowoxx.pdfkiesel.model.PdfColor
 import de.toowoxx.pdfkiesel.model.PdfFontDef
 import de.toowoxx.pdfkiesel.model.PdfElement
@@ -146,8 +147,16 @@ class TextStyle {
     var color: PdfColor = PdfColor.BLACK
     var align: TextAlign = TextAlign.LEFT
     var lineSpacing: Float = 1.4f
-    var bold: Boolean = false
+    var weight: FontWeight = FontWeight.Normal
     var italic: Boolean = false
+
+    /** Bold text is text at [FontWeight.Bold]. Turning bold off goes back to [FontWeight.Normal]. */
+    @Deprecated("Set the weight", ReplaceWith("weight = FontWeight.Bold", "de.toowoxx.pdfkiesel.model.FontWeight"))
+    var bold: Boolean
+        get() = weight == FontWeight.Bold
+        set(value) {
+            weight = FontWeight.of(bold = value)
+        }
 }
 
 class RectStyle {
@@ -242,7 +251,7 @@ internal constructor(
                 TextAlign.RIGHT -> x - w
             }
         elements.add(
-            PdfElement.Text(content, tx, y + s.fontSize * 0.3f, s.fontSize, resolvedFont, s.color)
+            PdfElement.Text(content, tx, y + s.fontSize * 0.3f, s.fontSize, resolvedFont, s.color, s.weight)
         )
     }
 
